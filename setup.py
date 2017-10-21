@@ -10,6 +10,7 @@ setup(
         'Click',
         'Jinja2',
         'pyyaml',
+        'kubernetes',
     ],
     entry_points='''
         [console_scripts]
