@@ -48,6 +48,14 @@ def commit_changes(output, env):
             print(exc)
             return
 
+    if deployment:
+        commit_deployment(deployment, env)
+
+    if service:
+        commit_service(service, env)
+
+
+def commit_deployment(deployment, env):
     extensions_v1beta1 = client.ExtensionsV1beta1Api()
     exists = does_deployment_exist(extensions_v1beta1, deployment['metadata']['name'], env)
 
@@ -56,6 +64,8 @@ def commit_changes(output, env):
     else:
         create_deployment(extensions_v1beta1, deployment, env)
 
+
+def commit_service(service, env):
     core = client.CoreV1Api()
     exists = does_service_exist(core, service['metadata']['name'], env)
 
@@ -64,7 +74,6 @@ def commit_changes(output, env):
         return
 
     update_service(core, service, env)
-
 
 def does_deployment_exist(api_instance, name, env):
     click.echo('Checking if deployment already exists or not.')
