@@ -4,7 +4,9 @@
 
 ## Getting started
 
-1. Create a template file, such as `deployment.tmpl`. Define your Kubernetes config, you may include a service and a deployment within the same file. For example...
+1. Install `$ curl -O https://raw.githubusercontent.com/EwanValentine/k8ie/master/install.sh && sh ./install.sh`
+
+2. Create a template file, such as `deployment.tmpl`. Define your Kubernetes config, you may include a service and a deployment within the same file. For example...
 
 ```yaml
 apiVersion: v1
@@ -46,7 +48,7 @@ spec:
           - containerPort: {{container_port or '8080'}}
 ```
 
-2. Now define a `service.yaml` file:
+3. Now define a `service.yaml` file:
 
 ```yaml
 name: "svc"
@@ -64,6 +66,6 @@ production:
 
 Keys in the route of your `service.yaml` will be overwritten by items within your environment specific fields on render. So if you use --env=staging, keys defined under `staging` will override items with the same name within the document root.
 
-3. Run your deployment `$ k8ie deploy deployment.tmpl --env=staging`.
+4. Run your deployment `$ k8ie deploy deployment.tmpl --env=staging`.
 
 If deployments or services already exist, they will be updated instead.
