@@ -1,11 +1,11 @@
+name: "svc"
+port: "80"
+target_port: "80"
+
 staging:
-    port: "80"
-    target_port: "80"
     name: "my-staging-service"
     container_name: "my-staging-service-container"
 
 production:
-    port: "80"
-    target_port: "80"
     name: "my-service"
     container_name: "my-serivce-container"

@@ -21,8 +21,7 @@ def deploy(input, env):
         except yaml.YAMLError as exc:
             print(exc)
 
-    if env != "":
-        vars = vars[env]
+    vars = dict(list(vars.items()) + list(vars[env].items()))
 
     output = input.name.replace('tmpl', 'yaml')
 
