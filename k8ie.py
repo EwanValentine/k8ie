@@ -51,12 +51,10 @@ def commit_changes(output, env):
     extensions_v1beta1 = client.ExtensionsV1beta1Api()
     exists = does_deployment_exist(extensions_v1beta1, deployment['metadata']['name'], env)
 
-    print(exists)
-
-    if exists is not True:
-        create_deployment(extensions_v1beta1, deployment, env)
-    else:
+    if exists is True:
         update_deployment(extensions_v1beta1, deployment, env)
+    else:
+        create_deployment(extensions_v1beta1, deployment, env)
 
     core = client.CoreV1Api()
     exists = does_service_exist(core, service['metadata']['name'], env)
@@ -77,10 +75,13 @@ def does_deployment_exist(api_instance, name, env):
         )
     except client.rest.ApiException as http_exception:
         return False
+
+    click.echo("Deployment already exists")
     return True
 
+
 def create_deployment(api_instance, deployment, env):
-    # Create deployement
+    click.echo('Creating deployment.')
     api_response = api_instance.create_namespaced_deployment(
         body=deployment,
         namespace=env,
@@ -89,12 +90,13 @@ def create_deployment(api_instance, deployment, env):
 
 
 def update_deployment(api_instance, deployment, env):
-    api_response = api_instance.patch_namespaced_deployment(
+    click.echo("Updating existing deployment")
+    api_response = api_instance.replace_namespaced_deployment(
         name=deployment['metadata']['name'],
-        body=deployment,
         namespace=env,
+        body=deployment,
     )
-    print("Deployment updated.")
+    print("Deployment updated. Status='%s'" % str(api_response.status))
 
 
 def create_service(api_instance, service, env):
@@ -104,6 +106,7 @@ def create_service(api_instance, service, env):
     )
     print("Service creatd. Status='%s'" % str(api_response.status))
 
+
 def update_service(api_instance, service, env):
     api_response = api_instance.patch_namespaced_service(
         name=service['metadata']['name'],
@@ -111,6 +114,7 @@ def update_service(api_instance, service, env):
         body=service,
     )
     print("Service updated. Status='%s'" % str(api_response.status))
+
 
 def does_service_exist(api_instance, service_name, env):
     try:
