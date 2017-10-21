@@ -30,10 +30,10 @@ def deploy(input, env):
     # Render template
     template = Template(input.read().decode("utf-8"))
     template.stream(vars).dump(output)
-    deploy_to_kb(output, env)
+    commit_changes(output, env)
 
 
-def deploy_to_kb(output, env):
+def commit_changes(output, env):
     print(output)
     with open(output, 'r') as stream:
         try:
@@ -48,15 +48,36 @@ def deploy_to_kb(output, env):
             print(exc)
             return
 
-    print(service)
-    print(deployment)
-
     extensions_v1beta1 = client.ExtensionsV1beta1Api()
-    create_deployment(extensions_v1beta1, deployment, env)
+    exists = does_deployment_exist(extensions_v1beta1, deployment['metadata']['name'], env)
 
-    core = kubernetes.client.CoreV1Api()
-    create_service(core, service, env)
+    print(exists)
 
+    if exists is not True:
+        create_deployment(extensions_v1beta1, deployment, env)
+    else:
+        update_deployment(extensions_v1beta1, deployment, env)
+
+    core = client.CoreV1Api()
+    exists = does_service_exist(core, service['metadata']['name'], env)
+
+    if exists is not True:
+        create_service(core, service, env)
+        return
+
+    update_service(core, service, env)
+
+
+def does_deployment_exist(api_instance, name, env):
+    click.echo('Checking if deployment already exists or not.')
+    try:
+        api_response = api_instance.read_namespaced_deployment(
+            name=name,
+            namespace=env,
+        )
+    except client.rest.ApiException as http_exception:
+        return False
+    return True
 
 def create_deployment(api_instance, deployment, env):
     # Create deployement
@@ -67,6 +88,15 @@ def create_deployment(api_instance, deployment, env):
     print("Deployment created. status='%s'" % str(api_response.status))
 
 
+def update_deployment(api_instance, deployment, env):
+    api_response = api_instance.patch_namespaced_deployment(
+        name=deployment['metadata']['name'],
+        body=deployment,
+        namespace=env,
+    )
+    print("Deployment updated.")
+
+
 def create_service(api_instance, service, env):
     api_response = api_instance.create_namespaced_service(
         body=service,
@@ -74,6 +104,23 @@ def create_service(api_instance, service, env):
     )
     print("Service creatd. Status='%s'" % str(api_response.status))
 
+def update_service(api_instance, service, env):
+    api_response = api_instance.patch_namespaced_service(
+        name=service['metadata']['name'],
+        namespace=env,
+        body=service,
+    )
+    print("Service updated. Status='%s'" % str(api_response.status))
+
+def does_service_exist(api_instance, service_name, env):
+    try:
+        api_response = api_instance.read_namespaced_service(
+            name=service_name,
+            namespace=env,
+        )
+    except client.rest.ApiException as http_exception:
+        return False
+    return True
 
 if __name__ == '__main__':
     cli()
