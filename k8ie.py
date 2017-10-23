@@ -1,3 +1,4 @@
+import os
 from jinja2 import Template
 import click
 import yaml
@@ -14,27 +15,39 @@ def cli(verbose):
 
 
 @cli.command()
-@click.argument('input', type=click.File('rb'))
+@click.option('--input', type=click.Path(exists=False))
 @click.option('--env', help='Environment')
 def deploy(input, env):
+    if input is None:
+        input = "k8s/deployment.tmpl"
+
+    if os.path.exists(input) is False:
+        click.echo("No template detected or found in default location (k8s/deployment.tmpl)")
+        return
+
+    input = open(input, 'r')
+
     with open("service.yaml", 'r') as stream:
         try:
             vars = yaml.load(stream)
         except yaml.YAMLError as exc:
             print(exc)
 
-    vars = dict(list(vars.items()) + list(vars[env].items()))
+    if env in vars:
+        vars = dict(list(vars.items()) + list(vars[env].items()))
+    else:
+        vars = vars.items()
 
     output = input.name.replace('tmpl', 'yaml')
 
     # Render template
-    template = Template(input.read().decode("utf-8"))
+    template = Template(input.read())
     template.stream(vars).dump(output)
+
     commit_changes(output, env)
 
 
 def commit_changes(output, env):
-    print(output)
     with open(output, 'r') as stream:
         try:
             docs = yaml.load_all(stream)
@@ -74,6 +87,7 @@ def commit_service(service, env):
         return
 
     update_service(core, service, env)
+
 
 def does_deployment_exist(api_instance, name, env):
     click.echo('Checking if deployment already exists or not.')
@@ -134,6 +148,7 @@ def does_service_exist(api_instance, service_name, env):
     except client.rest.ApiException as http_exception:
         return False
     return True
+
 
 if __name__ == '__main__':
     cli()

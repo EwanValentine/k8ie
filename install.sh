@@ -4,6 +4,8 @@ git clone git@github.com:EwanValentine/k8ie.git
 cd k8ie
 virtualenv venv
 . venv/bin/activate
-pip install --editable .
+pip3 install --editable .
 
 k8ie --help
+
+rm -rf ~/k8ie
