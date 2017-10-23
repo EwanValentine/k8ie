@@ -35,8 +35,11 @@ def deploy(input, env):
 
     if env in vars:
         vars = dict(list(vars.items()) + list(vars[env].items()))
-    else:
-        vars = vars.items()
+
+    print(vars)
+    tag = generate_tag(vars)
+    vars['image'] = tag + ':' + env
+    build_docker_image(tag, env)
 
     output = input.name.replace('tmpl', 'yaml')
 
@@ -45,6 +48,17 @@ def deploy(input, env):
     template.stream(vars).dump(output)
 
     commit_changes(output, env)
+
+
+def generate_tag(config):
+    return config['repo'] + '/' + config['project'] + '/' + config['name']
+
+
+def build_docker_image(tag, env):
+    os.system('docker build -t ' + tag + ':' + env)
+    os.system('docker tag ' + tag + ' ' + tag + ':' + env)
+    os.system('gcloud docker -- push ' + tag)
+    os.system('gcloud docker -- push ' + tag + ':' + env)
 
 
 def commit_changes(output, env):
