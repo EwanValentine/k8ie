@@ -36,9 +36,9 @@ def deploy(input, env):
     if env in vars:
         vars = dict(list(vars.items()) + list(vars[env].items()))
 
-    print(vars)
     tag = generate_tag(vars)
     vars['image'] = tag + ':' + env
+    print(vars['image'])
     build_docker_image(tag, env)
 
     output = input.name.replace('tmpl', 'yaml')
@@ -68,18 +68,13 @@ def commit_changes(output, env):
             for doc in docs:
                 if doc['kind'] == "Service":
                     service = doc
+                    commit_service(service, env)
                 elif doc['kind'] == "Deployment":
                     deployment = doc
-
+                    commit_deployment(deployment, env)
         except yaml.YAMLError as exc:
             print(exc)
             return
-
-    if deployment:
-        commit_deployment(deployment, env)
-
-    if service:
-        commit_service(service, env)
 
 
 def commit_deployment(deployment, env):
