@@ -13,7 +13,6 @@ def cli(verbose):
     if verbose:
         click.echo('Running in verbose mode')
 
-
 @cli.command()
 @click.option('--input', type=click.Path(exists=False))
 @click.option('--env', help='Environment')
@@ -38,8 +37,8 @@ def deploy(input, env):
 
     tag = generate_tag(vars)
     vars['image'] = tag + ':' + env
-    print(vars['image'])
-    build_docker_image(tag, env)
+    vars['env'] = env
+    # build_docker_image(tag, env)
 
     output = input.name.replace('tmpl', 'yaml')
 
