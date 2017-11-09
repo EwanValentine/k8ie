@@ -13,10 +13,12 @@ def cli(verbose):
     if verbose:
         click.echo('Running in verbose mode')
 
+
 @cli.command()
 @click.option('--input', type=click.Path(exists=False))
 @click.option('--env', help='Environment')
-def deploy(input, env):
+@click.option('--dry', is_flag=True)
+def deploy(input, env, dry):
     if input is None:
         input = "k8s/deployment.tmpl"
 
@@ -35,8 +37,7 @@ def deploy(input, env):
     if env in vars:
         vars = dict(list(vars.items()) + list(vars[env].items()))
 
-    tag = generate_tag(vars)
-    vars['image'] = tag + ':' + env
+    # tag = generate_tag(vars)
     vars['env'] = env
     # build_docker_image(tag, env)
 
@@ -45,8 +46,9 @@ def deploy(input, env):
     # Render template
     template = Template(input.read())
     template.stream(vars).dump(output)
-
-    commit_changes(output, env)
+    
+    if dry is not True:
+        commit_changes(output, env)
 
 
 def generate_tag(config):
